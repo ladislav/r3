@@ -55,10 +55,8 @@
 	REBI64 arg;
 	REBINT n;
 
-	REBU64 p, a, b; // for overflow detection
-	REBCNT a1, a0, b1, b0;
+	REBU64 a1, a0, b1, b0;
 	REBFLG sgn;
-	REBI64 anum;
 
 	num = VAL_INT64(val);
 
@@ -110,46 +108,62 @@
 	switch (action) {
 
 	case A_ADD:
-		anum = (REBU64)num + (REBU64)arg;
-		if (
-			((num < 0) == (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
-		num = anum;
+		if(num >= 0) {
+			if(arg > MAX_I64 - num)
+				Trap0(RE_OVERFLOW);
+		} else {
+			if(arg < MIN_I64 - num)
+				Trap0(RE_OVERFLOW);
+		}
+		num += arg;
 		break;
 
 	case A_SUBTRACT:
-		anum = (REBU64)num - (REBU64)arg;
-		if (
-			((num < 0) != (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
-		num = anum;
+		if(arg >= 0) {
+			if(num < MIN_I64 + arg)
+				Trap0(RE_OVERFLOW);
+		} else {
+			if(num > MAX_I64 + arg)
+				Trap0(RE_OVERFLOW);
+		}
+		num -= arg;
 		break;
 
 	case A_MULTIPLY:
-		a = num;
-		sgn = (num < 0);
-		if (sgn) a = -a;
-		b = arg;
-		if (arg < 0) {
+		// handle signs
+		sgn = num < 0;
+		if(sgn)
+			num = -(REBU64) num;
+		if(arg < 0) {
 			sgn = !sgn;
-			b = -b;
+			arg = -(REBU64) arg;
 		}
-		p = a * b;
-		a1 = a>>32;
-		a0 = a;
-		b1 = b>>32;
-		b0 = b;
-		if (
-			(a1 && b1)
-			|| ((REBU64)a0 * b1 + (REBU64)a1 * b0 > p >> 32)
-			|| ((p > (REBU64)MAX_I64) && (!sgn || (p > -(REBU64)MIN_I64)))
-		) Trap0(RE_OVERFLOW);
-		num = sgn ? -p : p;
+		// subdivide the factors
+		a1 = (REBU64) num >> 32;
+		b1 = (REBU64) arg >> 32;
+		a0 = (REBU64) num & 0xFFFFFFFFu;
+		b0 = (REBU64) arg & 0xFFFFFFFFu;
+		// multiply the parts
+		if(!a1)
+			num = b1 * a0;
+		else if(!b1)
+			num = a1 * b0;
+		else
+			Trap0(RE_OVERFLOW);
+		if((REBU64) num > (REBU64) MIN_I64 >> 32)
+			Trap0(RE_OVERFLOW);
+		num = ((REBU64) num << 32) + a0 * b0;
+		if(sgn) {
+			if((REBU64) num > (REBU64) MIN_I64)
+				Trap0(RE_OVERFLOW);
+			num = -(REBU64) num;
+		} else if((REBU64) num > (REBU64) MAX_I64)
+			Trap0(RE_OVERFLOW);
 		break;
 
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		if (num == MIN_I64 && arg == -1) Trap0(RE_OVERFLOW);
+		if (num < - MAX_I64 && arg == -1) Trap0(RE_OVERFLOW);
 		if (num % arg == 0) {
 			num = num / arg;
 			break;
@@ -171,15 +185,18 @@
 	case A_XOR: num ^= arg; break;
 
 	case A_NEGATE:
-		if (num == MIN_I64) Trap0(RE_OVERFLOW);
+		if (num < - MAX_I64) Trap0(RE_OVERFLOW);
 		num = -num;
 		break;
 
 	case A_COMPLEMENT: num = ~num; break;
 
-	case A_ABSOLUTE: 
-		if (num == MIN_I64) Trap0(RE_OVERFLOW);
-		if (num < 0) num = -num;
+	case A_ABSOLUTE:
+		if(num < 0) {
+			if (num < - MAX_I64)
+				Trap0(RE_OVERFLOW);
+			num = -num;
+		}
 		break;
 
 	case A_EVENQ: num = ~num;
