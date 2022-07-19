@@ -163,7 +163,11 @@
 
 	case A_DIVIDE:
 		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
-		if (num < - MAX_I64 && arg == -1) Trap0(RE_OVERFLOW);
+		if(arg == -1) {
+			if(num < - MAX_I64) Trap0(RE_OVERFLOW);
+			num = - num;
+			break;
+		}
 		if (num % arg == 0) {
 			num = num / arg;
 			break;

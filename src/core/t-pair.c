@@ -206,26 +206,32 @@
 		switch (action) {
 
 		case A_ADD:
-			x1 += x2;
-			y1 += y2;
+			x1 = (REBCNT) x1 + (REBCNT) x2;
+			y1 = (REBCNT) y1 + (REBCNT) y2;
 			goto setPair;
 
 		case A_SUBTRACT:
-			x1 -= x2;
-			y1 -= y2;
+			x1 = (REBCNT) x1 - (REBCNT) x2;
+			y1 = (REBCNT) y1 - (REBCNT) y2;
 			goto setPair;
 
 		case A_MULTIPLY:
-			x1 *= x2;
-			y1 *= y2;
+			x1 = (REBCNT) x1 * (REBCNT) x2;
+			y1 = (REBCNT) y1 * (REBCNT) y2;
 			goto setPair;
 
 		case A_DIVIDE:
 		case A_REMAINDER:
 			if (x2 == 0 || y2 == 0) Trap0(RE_ZERO_DIVIDE);
 			if (action == A_DIVIDE) {
-				x1 /= x2;
-				y1 /= y2;
+				if(x2 == -1)
+					x1 = - (REBCNT) x1;
+				else
+					x1 /= x2;
+				if(y2 == -1)
+					y1 = - (REBCNT) y1;
+				else
+					y1 /= y2;
 			}
 			else {
 				x1 = (REBD32)fmod(x1, x2);
@@ -247,8 +253,8 @@
 			DECIDE((x1 & 1) == 0 && (y1 & 1) == 0);
 #endif
 		case A_NEGATE:
-			x1 = -x1;
-			y1 = -y1;
+			x1 = - (REBCNT) x1;
+			y1 = - (REBCNT) y1;
 			goto setPair;
 #ifdef temp
 		case A_COMPLEMENT:
@@ -257,8 +263,8 @@
 			goto setPair;
 #endif
 		case A_ABSOLUTE:
-			if (x1 < 0) x1 = -x1;
-			if (y1 < 0) y1 = -y1;
+			if (x1 < 0) x1 = - (REBCNT) x1;
+			if (y1 < 0) y1 = - (REBCNT) y1;
 			goto setPair;
 
 		case A_ROUND:
