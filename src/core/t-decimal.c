@@ -324,7 +324,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 		case A_EVENQ:
 		case A_ODDQ:
 			d1 = fabs(fmod(d1, 2.0));
-			DECIDE((action == A_EVENQ) == (d1 < -1.5 || d1 > 1.5 || (d1 > -0.5 && d1 < 0.5)));
+			DECIDE((action == A_EVENQ) == (d1 < 0.5 || d1 >= 1.5));
 
 		case A_MAKE:
 		case A_TO:
