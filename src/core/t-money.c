@@ -112,6 +112,7 @@
 	REBVAL *arg;
 	REBYTE *str;
 	REBINT equal = 1;
+	REBDEC d1;
 
 	if (IS_BINARY_ACT(action)) {
 		arg = D_ARG(2);
@@ -190,8 +191,9 @@
 
 	case A_EVENQ:
 	case A_ODDQ:
-		equal = 1 & (REBINT)deci_to_int(VAL_DECI(val));
-		if (action == A_EVENQ) equal = !equal;
+		d1 = fabs(fmod(VAL_DECI(val), 2.0));
+		equal = d1 < 0.5 || d1 >= 1.5;
+		if(action != A_EVENQ) equal = !equal;
 		if (equal) goto is_true;
 		goto is_false;
 
