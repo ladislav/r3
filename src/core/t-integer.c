@@ -133,10 +133,10 @@
 		// handle signs
 		sgn = num < 0;
 		if(sgn)
-			num = -(REBU64) num;
+			num = (REBI64) -(REBU64) num;
 		if(arg < 0) {
 			sgn = !sgn;
-			arg = -(REBU64) arg;
+			arg = (REBI64) -(REBU64) arg;
 		}
 		// subdivide the factors
 		a1 = (REBU64) num >> 32;
@@ -156,7 +156,7 @@
 		if(sgn) {
 			if((REBU64) num > (REBU64) MIN_I64)
 				Trap0(RE_OVERFLOW);
-			num = -(REBU64) num;
+			num = (REBI64) -(REBU64) num;
 		} else if((REBU64) num > (REBU64) MAX_I64)
 			Trap0(RE_OVERFLOW);
 		break;
