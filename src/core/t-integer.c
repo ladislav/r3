@@ -30,6 +30,9 @@
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
 
+#ifdef _MSC_VER
+	#pragma warning(disable: 4146) // unary minus operator applied to unsigned type, result still unsigned
+#endif
 
 /***********************************************************************
 **
