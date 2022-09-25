@@ -247,9 +247,15 @@
 	case A_TO:
 		val = D_ARG(2);
 		if (IS_DECIMAL(val) || IS_PERCENT(val)) {
-			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64)
+			if(VAL_DECIMAL(val) >= MAX_D64)
+				if(VAL_DECIMAL(val) > MAX_D64)
+					Trap0(RE_OVERFLOW);
+				else
+					num = MAX_I64;
+			else if(VAL_DECIMAL(val) < MIN_D64)
 				Trap0(RE_OVERFLOW);
-			num = (REBI64)VAL_DECIMAL(val);
+			else
+				num = (REBI64)VAL_DECIMAL(val);
 		}
 		else if (IS_INTEGER(val))
 			num = VAL_INT64(val);
