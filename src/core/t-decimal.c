@@ -197,17 +197,17 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 /*
 ***********************************************************************/
 {
-	REBI64 n = 0;
+	REBU64 n = 0;
 	REBSER *ser = VAL_SERIES(bin);
 	REBCNT idx = VAL_INDEX(bin);
 	REBCNT len = VAL_LEN(bin);
 
 	if (len > 8) len = 8;
 
-	for (; len; len--, idx++) n = (n << 8) | (REBI64)(GET_ANY_CHAR(ser, idx));
+	for (; len; len--, idx++) n = (n << 8) | (REBU64)(GET_ANY_CHAR(ser, idx));
 
 	VAL_SET(dec, REB_DECIMAL);
-	VAL_INT64(dec) = n; // aliasing the bits!
+	VAL_INT64(dec) = (REBI64) n; // aliasing the bits!
 }
 
 
