@@ -293,8 +293,12 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				goto setDec;
 
 			case A_POWER:
-				if (d1 == 0) goto setDec;
-				if (d2 == 0) {
+				if ( d1 == 0.0 )
+					if ( d2 <= 0.0 )
+						Trap0(RE_ZERO_DIVIDE);
+					else
+						goto setDec;
+				if (d2 == 0.0) {
 					d1 = 1.0;
 					goto setDec;
 				}
