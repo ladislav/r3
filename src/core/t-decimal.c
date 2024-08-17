@@ -409,10 +409,47 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					if (IS_INTEGER(++arg)) exp = (REBDEC)VAL_INT64(arg);
 					else if (IS_DECIMAL(arg) || IS_PERCENT(val)) exp = VAL_DECIMAL(arg);
 					else Trap_Make(REB_DECIMAL, arg);
-					while (exp >= 1)            // funky. There must be a better way
-						exp--, d1 *= 10.0, Check_Overflow(d1);
-					while (exp <= -1)
-						exp++, d1 /= 10.0;
+
+					// Warning! The code below was tested in R2, not in R3!
+					if(d1 == 0.0) goto setDec;
+					// do not calculate pow(10.0, exp) if
+					// * it may overflow, while to decimal! [arg exp] may be finite
+					// * it may underflow, while to decimal! [arg exp] may be nonzero
+					// abs(d1) >= 4.9406564584124654E-324
+					if(exp >= 206.0) {
+						// pow(10.0, exp) cannot underflow
+						d1 *= 1e206;
+						exp -= 206.0;
+						// abs(d1) >= 4.940656458412466e-118
+						if(exp >= 206) {
+							d1 *= 1e206;
+							exp -= 206.0;
+						}
+						// exp < 206.0 || abs(d1) >= 4.940656458412466e+88
+						// in the former case, pow(10.0, exp) cannot overflow
+						// in the latter case, if pow(10.0, exp) overflows, then to decimal! [arg exp] cannot be finite
+						d1 *= pow(10.0, exp);
+					}
+					// abs(d1) <= 1.7976931348623157e+308
+					else if(exp <= -206.0) {
+						// pow(10.0, exp) cannot overflow
+						d1 *= 1e-206;
+						exp += 206.0;
+						// abs(d1) <= 1.7976931348623157e+102
+						if(exp <= -206.0) {
+							d1 *= 1e-206;
+							exp += 206.0;
+						}
+						// exp > -206.0 || abs(d1) <= 1.7976931348623157e-104
+						// in the former case, pow(10.0, exp) cannot underflow
+						// in the latter case, if pow(10.0, exp) underflows, then to decimal! [arg exp] cannot be nonzero
+						d1 *= pow(10.0, exp);
+					}
+					else {
+						// -206.0 < exp < 206.0
+						// pow(10.0, exp) can neither overflow nor underflow
+						d1 *= pow(10.0, exp);
+					}
 				} else
 					Trap_Make(type, val);
 			}
